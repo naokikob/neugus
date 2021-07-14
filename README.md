@@ -1,4 +1,11 @@
-This branch is for learning mixed formulas consisting of interger/boolean variables.
+This repository contains a tool is for NN-guided synthesis of quantifier-free formulas of linear integer arithmetic, and a CHC solver based on it.
+The technical background is found in the following paper.
+```
+Naoki Kobayashi, Taro Sekiyama, Issei Sato, Hiroshi Unno:
+Toward Neural-Network-Guided Program Synthesis and Verification, 
+to appear in SAS 2021. 
+A preliminary version is found at https://arxiv.org/abs/2103.09414.
+```
 
 # How to install the formula synthesizer
 run
