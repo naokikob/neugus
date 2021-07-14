@@ -1,0 +1,56 @@
+Signature:
+;; parity constraints: should learn a predicate "even" or "odd"
+;; run with "../learn.sh -mod2 <this_file>"
+parity Int
+Constraints:
+I parity -20 parity -19 =>
+I => parity -20 parity -19
+I parity -18 parity -17 =>
+I => parity -18 parity -17
+I parity -16 parity -15 =>
+I => parity -16 parity -15
+I parity -14 parity -13 =>
+I => parity -14 parity -13
+I parity -12 parity -11 =>
+I => parity -12 parity -11
+I parity -10 parity -9 =>
+I => parity -10 parity -9
+I parity -8 parity -7 =>
+I => parity -8 parity -7
+I parity -6 parity -5 =>
+I => parity -6 parity -5
+I parity -4 parity -3 =>
+I => parity -4 parity -3
+I parity -2 parity -1 =>
+I => parity -2 parity -1
+I parity 0 parity 1 =>
+I => parity 0 parity 1
+I parity 2 parity 3 =>
+I => parity 2 parity 3
+I parity 4 parity 5 =>
+I => parity 4 parity 5
+I parity 6 parity 7 =>
+I => parity 6 parity 7
+I parity 8 parity 9 =>
+I => parity 8 parity 9
+I parity 10 parity 11 =>
+I => parity 10 parity 11
+I parity 12 parity 13 =>
+I => parity 12 parity 13
+I parity 14 parity 15 =>
+I => parity 14 parity 15
+I parity 16 parity 17 =>
+I => parity 16 parity 17
+I parity 18 parity 19 =>
+I => parity 18 parity 19
+I parity 20 parity 21 =>
+I => parity 20 parity 21
+End
+(*
+let gen() =
+  for i= -10 to 10 do
+  print_string ("I parity "^(string_of_int(i*2))^" parity "^(string_of_int(i*2+1))^" =>\n");
+  print_string ("I => parity "^(string_of_int(i*2))^" parity "^(string_of_int(i*2+1))^"\n")
+  done;;
+gen()
+*)
