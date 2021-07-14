@@ -1,0 +1,5 @@
+(executables
+   (names learnMp checkquals convert hoicelog2dat genHoiceInputWithHint cycle data2smt mergedata)
+   (libraries base stdio torch)
+)
+

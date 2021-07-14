@@ -1,0 +1,16 @@
+;; FAIL (TIMEOUT: 10 seconds)
+(set-logic HORN)
+(declare-fun __query__ () Bool)
+(declare-fun inv-f (Int Int Int) Bool)
+(assert (forall ((A Int) (B Int) (C Int))
+  (=> (and (inv-f B A C) (not (> A 0)) (not (= B C))) __query__)))
+(assert (forall ((A Int) (B Int) (C Int) (D Int) (E Int) (F Int))
+  (=> (and (inv-f D B F) (> B 0) (= C (+ D 1)) (= E (- F 1)) (= A (- B 1)))
+      (inv-f C A E))))
+(assert (forall ((A Int) (B Int) (C Int))
+  (=> (and (= B 0) (> A 0) (= C (* 2 A))) (inv-f B A C))))
+
+
+(assert (forall () (not (__query__))))
+(check-sat)
+(exit)
