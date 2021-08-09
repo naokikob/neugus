@@ -1052,7 +1052,7 @@ let rec learnsub numepochs vs =
    with Qualifiers.FAIL _ ->
    if success then
      (print_string "Failed to find predicates\n";
-      if !retry>0 then (* try once more *)
+      if !retry>0 && !distflag then (* try once more after re-scaling data *)
         (load := None; retry := 0;
         Hashtbl.clear qualtab;
         Hashtbl.clear predtab;

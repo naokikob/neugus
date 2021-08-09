@@ -1,10 +1,10 @@
 This repository contains a tool is for NN-guided synthesis of quantifier-free formulas of linear integer arithmetic, and a CHC solver based on it.
 The technical background is found in the following paper.
 ```
-Naoki Kobayashi, Taro Sekiyama, Issei Sato, Hiroshi Unno:
-Toward Neural-Network-Guided Program Synthesis and Verification, 
+Naoki Kobayashi, Taro Sekiyama, Issei Sato, and Hiroshi Unno,
+"Toward Neural-Network-Guided Program Synthesis and Verification", 
 to appear in SAS 2021. 
-A preliminary version is found at https://arxiv.org/abs/2103.09414.
+A preliminary version is available at https://arxiv.org/abs/2103.09414.
 ```
 
 # How to install the formula synthesizer
@@ -63,6 +63,6 @@ run
 ```
 
 ### Example:
-./cycle.sh data/benchmark/plusminus.smt2
+./cycle.sh data/chc/plusminus.smt2
 
 

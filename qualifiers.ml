@@ -80,7 +80,7 @@ let fold_constants a arity biases _ =
     (arity, 0.)
     biases
   in
-  a.(arity) <- Float.ceil(x)
+  a.(arity) <- Float.ceil(x) 
     
 let to_fraction ((a,b), weight) earity biases =
   let i = max_index a earity in
@@ -132,11 +132,6 @@ let rec push x (l1,l2) =
     [] -> (l1,l2)
   | y::x' -> push x' (pushone y (l1,l2))
 
-
-(* extract qualifiers from the weight vectors of NN;
- * Currently this part is implemented in quite ad hoc a manner;
- * to do: implement a more standard procedure based on continued fraction expansion
- *)
 let extract_qualifiers p rvec =
   let max_size = Array.length rvec in
   let cut = min max_size (max !num_of_candidates
@@ -346,10 +341,7 @@ let minimize_conj ntab quals conj =
    minimize_conj_aux ntab quals conja n 1;
    Array.to_list conja)
 
-(* Construct a predicate for p:
- * Currently, it is implemented in quite ad hoc a manner;
- * to do: implement a more standard procedure for learning Boolean functions
- *)  
+  
 let construct_predicate_p p ignore_imp =
   let quals = try Hashtbl.find qualtab p with Not_found -> assert false in
   let (ptab,ntab) = get_truth_tables p quals ignore_imp in
