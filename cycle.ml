@@ -109,7 +109,7 @@ let main () =
     let hoicedatalog = "hoicedata.out" in
     let _ = Sys.command ("hoice --simplify off -v -v --datagen "^(string_of_int !datagen2)
                          ^" --timeout "^(string_of_int !datagen2_timelimit)
-                         ^" "^smtfile^" > "^hoicedatalog) in
+                         ^" "^optsmtfile^" > "^hoicedatalog) in
     if successful(hoicedatalog) then
       let _ = Sys.command ("cat "^hoicedatalog) in exit(0)
     else
