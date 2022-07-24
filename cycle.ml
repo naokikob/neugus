@@ -1,6 +1,5 @@
-
-let path = "/home/koba/program/torch/torch/chc/"
-let path2 = "/home/koba/program/fptprove/"
+let path = "" (* either set this to the path of this directory, or add this directory to the PATH environment variable *)
+let path2 = ""
 let learnopt = ref ""
 let successful filename = 
   let tmpfile2 = "tmp1.log" in
@@ -27,7 +26,8 @@ let rec read_options index =
                  size2 := int_of_string(Sys.argv.(index+2));
                  read_options (index+3))
   | "-mod2" -> (learnopt := " -mod2"^(!learnopt); read_options (index+1))
-  | "-datagen" -> (datagen := true; read_options (index+1))
+  (* This option is not provided for public version
+    | "-datagen" -> (datagen := true; read_options (index+1)) *)
   | "-datagen2" -> (datagen2 := int_of_string(Sys.argv.(index+1));
                     datagen2_timelimit := int_of_string(Sys.argv.(index+2));
                     read_options (index+3))

@@ -1,7 +1,8 @@
 (* learning for CHC with multiple predicates *)
 open Torch
 open Global                
-                 
+
+let scaling_factor = ref 1.0
 let data_to_floatlist dl =
     List.fold_right
       (fun d (fl, bl) ->
@@ -393,7 +394,7 @@ let prepare_models vs =
       let layer2 = linear2 bnodes vs in
       let layer12 =
         fun xs bs ->
-        let os = layer1 xs in
+        let os = layer1 (Tensor.((f (!scaling_factor)) * xs)) in
         layer2 Tensor.(cat [bs;os] ~dim:1)
       in
       let model_p = if !layers=2 then
@@ -672,9 +673,11 @@ let regularizer() =
   
 let loss_all x =
   if !num_of_constraints=0 then Tensor.(f 0.)
+(*  
   else if !regularization_factor > 0.
   then
     Tensor.(((f !pos_w) * loss_pos x + loss_neg x  + (f !pos_i) * (loss_imp_packed x + loss_imp_rest x)) / (f (float_of_int !num_of_constraints)) + regularizer())
+ *)
   else
     Tensor.(((f !pos_w) * loss_pos x + loss_neg x  + (f !pos_i) * (loss_imp_packed x + loss_imp_rest x)) / (f (float_of_int !num_of_constraints)));;
 
@@ -694,10 +697,36 @@ let apply_model() =
    predictions
   )
 
+let rescale_tensor t =
+  let c = Tensor.(f (!regularization_const) * Tensor.ones (Tensor.shape t)) in
+  let z = Tensor.zeros (Tensor.shape t) in
+  let t' = Tensor.((max z (t-c)) + (min z (t+c)) - t) in
+  Tensor.no_grad (fun _ -> Tensor.(t += t'))
+
+let weightname_of_1st_layer s =
+  let n = String.length s in
+  (s="weight" ||
+     (n>7 &&
+        (String.sub s 0 6="weight") &&
+          (int_of_string (String.sub s 7 (n-7)) mod (!layers-1) = 0)))
+  
+let adjust_weight() =
+  let weights = List.map snd
+                  (List.filter
+                      (fun (s,_)-> weightname_of_1st_layer s)
+                      (Var_store.all_vars !global_vs)
+                  )
+  in
+  List.iter rescale_tensor weights
+  
 let step optm =
   let x = apply_model() in
   let loss = loss_all x in
   let _ = Optimizer.backward_step optm ~loss in
+  let _ = if !regularization
+          then (scaling_factor := !scaling_factor *. !regularization_factor;
+                adjust_weight())
+  in
   (loss,x)
 
   
@@ -1118,6 +1147,7 @@ let rec read_options index =
   | "-cnf" -> (cnf := true; layers := 3; hiddenfun := 0; read_options (index+1))
   | "-dnf" -> (dnf := true; layers := 3; hiddenfun := 0; read_options (index+1))
   | "-smt" -> (outsmt := true; smtfile := Sys.argv.(index+1); read_options (index+2))
+  | "-ml" -> (outml := true; mlfile := Sys.argv.(index+1); read_options (index+2))
   | "-nodes" -> (hidden_nodes := int_of_string(Sys.argv.(index+1)); read_options (index+2))
   | "-nodes2" -> (hidden_nodes2 := int_of_string(Sys.argv.(index+1)); read_options (index+2))
   | "-qce" -> (qcerror := int_of_string(Sys.argv.(index+1)); read_options (index+2))
@@ -1128,13 +1158,18 @@ let rec read_options index =
   | "-4l" -> (layers := 3; read_options (index+1))
   | "-poly" -> (poly := true; read_options (index+1))
   | "-opt" -> (optimizer := int_of_string(Sys.argv.(index+1)); read_options (index+2))
+  | "-coeff" -> (maxcoeff := int_of_string(Sys.argv.(index+1)); read_options (index+2))
   | "-logqual" -> (log_qual := Some(Sys.argv.(index+1)); read_options (index+2))
   | "-save" -> (save := Some(Sys.argv.(index+1)); read_options (index+2))
   | "-load" -> (load := Some(Sys.argv.(index+1)); read_options (index+2))
   | "-rate" -> (learning_rate := float_of_string(Sys.argv.(index+1)); read_options (index+2))
-  | "-reg" -> (regularization_factor := float_of_string(Sys.argv.(index+1));
-               regularization_factor2 := float_of_string(Sys.argv.(index+2));
+  | "-reg" -> (regularization := true;
+               regularization_factor := float_of_string(Sys.argv.(index+1));
+               regularization_const := float_of_string(Sys.argv.(index+2));
                read_options (index+3))
+  | "-noreg" -> (regularization := false;
+               read_options (index+1))
+  | "-conjqual" -> (conjqual := int_of_string(Sys.argv.(index+1)); read_options (index+2))
   | "-threshold" -> (loss_threshold := float_of_string(Sys.argv.(index+1)); read_options (index+2))
   | "-ratio" -> (ratio_extraction := float_of_string(Sys.argv.(index+1)); read_options (index+2))
   | "-retry" -> (retry := int_of_string(Sys.argv.(index+1)); read_options (index+2))
@@ -1145,7 +1180,8 @@ let rec read_options index =
                   if !outfun>1 then lossfun := 2; read_options (index+2))
   | "--help" -> (print_options(); exit 0)
   | "-noimp" -> (noimp := true; read_options (index+1))
-  | "-cutimp" -> (numimp := 100; read_options (index+1))
+  | "-numimp" -> (numimp := 100; read_options (index+1))
+  | "-cutimp" -> (cutimp := int_of_string(Sys.argv.(index+1)); read_options (index+2))
   | _ -> index
   
 
@@ -1162,6 +1198,7 @@ let main() =
     let filename = Sys.argv.(index) in
     (Dataloader.input_alldata filename signatures constraints;
      if !noimp then impc := [];
+     impc := List.filter (fun (pl,nl)-> (List.length pl)+(List.length nl) < !cutimp) !impc;
      Random.self_init();
      report_sig();
      learn !epochs);;
@@ -1170,7 +1207,7 @@ let main() =
 if !Sys.interactive then
   ()
 else
-  main();;
+  try main() with UnSat -> (print_string "input is unsat\n"; exit(-1));;
     
 (*      
 let w = List.assoc "weight_1" (Var_store.all_vars vs)

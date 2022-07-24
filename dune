@@ -1,5 +1,6 @@
 (executables
-   (names learnMp checkquals convert hoicelog2dat genHoiceInputWithHint cycle data2smt mergedata)
+   (names learnMp checkquals convert hoicelog2dat genHoiceInputWithHint cycle data2smt mergedata oracle)
+;;   (modules learnMp global dataloader qualifiers)
    (libraries base stdio torch)
 )
 

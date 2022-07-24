@@ -2,12 +2,15 @@ open Torch
 open Global
    
 exception FAIL of string
-let range =
+let range4 =
   let points1 = [(0.,1,0); (1.,1,1)] in
   let points2 = [(0.5, 2,1)] in
   let points3 = [(1./. 3.,3, 1); (2./. 3., 3, 2)] in
   let points4 = [(1./. 4., 4, 1); (3./. 4., 4, 3)] in
   List.sort (fun (x,_,_) (y, _,_) -> Float.compare x y)  (points1@points2@points3@points4)
+let range5 =
+  let points5 = [(1./. 5., 5, 1);(2./. 5., 5, 2);(3./. 5., 5, 3);(4./. 5., 5, 4)] in
+  List.sort (fun (x,_,_) (y, _,_) -> Float.compare x y)  (range4@points5)
 
 let abs_sign r =
   if r< 0. then (Float.abs r, false)
@@ -61,7 +64,11 @@ let max_index a arity =
   !index
 
 let get_devisor x =
-  let r = Float.abs x in find_devisor range r
+  let r = Float.abs x in 
+  if !maxcoeff=4 then
+    find_devisor range4 r
+  else
+    find_devisor range5 r
 
 let lcm_of_array a arity =
   let x = ref 1 in
@@ -71,6 +78,14 @@ let lcm_of_array a arity =
    done;
    !x)
 
+let max_of_array a arity =
+  let x = ref 1 in
+  (*  let size = Array.length a in *)
+  (for i=0 to arity-1 do
+    x := max !x a.(i)
+   done;
+   !x)
+  
 let fold_constants a arity biases _ =
   let (_,x) = List.fold_left
     (fun (i,c) bias ->
@@ -87,7 +102,8 @@ let to_fraction ((a,b), weight) earity biases =
   let maxelem = a.(i) in
   let a = Array.map (fun x -> x /. maxelem) a in
   let devisors = Array.map get_devisor a in
-  let common_divisor = float_of_int(lcm_of_array devisors earity) in
+  (*  let common_divisor = float_of_int(lcm_of_array devisors earity) in *)
+  let common_divisor = float_of_int(max_of_array devisors earity) in
   let flag = (weight>0. && maxelem > 0.) || (weight<0. && maxelem < 0.) in
   let a = Array.map (fun x -> x *. common_divisor) a in
   let _ = if !poly then () else fold_constants a earity biases flag in
@@ -389,7 +405,7 @@ let construct_predicates() =
        else raise (FAIL "failed to find a solution for implication constraints\n")
    )
 
-let print_qual p monomials (coeffs,const, flag,_) =
+let output_qual fp p monomials (coeffs,const, flag,_) =
   let earity = earity_of p in
   let print_plus = ref false in
   (for i=0 to earity-1 do
@@ -398,66 +414,75 @@ let print_qual p monomials (coeffs,const, flag,_) =
      if k=0 then ()
      else
        (if k>0 then
-          (if !print_plus then print_string " + ";
-           if k>1||s="" then print_int k)
+          (if !print_plus then output_string fp " + ";
+           if k>1||s="" then
+             (output_string fp (string_of_int k);
+              if !outml then output_string fp "*"))
         else
-          (print_string " -";
-           if k< -1 then (print_string " "; print_int(abs(k))));
-        print_string s;
+          (output_string fp " -";
+           if k< -1 then
+             (output_string fp " ";
+              output_string fp (string_of_int(abs(k)));
+              if !outml then output_string fp "*"));
+        output_string fp s;
         print_plus := true)
    done;
    let k = const in
    if k=0 then ()
    else
-     (if k>0 then if !print_plus then print_string " + " else ()
-      else print_string " - ";
-      print_int (abs k));
-   if flag then print_string " > 0"
-   else print_string " < 0")
+     (if k>0 then if !print_plus then output_string fp " + " else ()
+      else output_string fp " - ";
+      output_string fp (string_of_int (abs k)));
+   if flag then output_string fp " > 0"
+   else output_string fp " < 0")
 
-let rec print_conj_aux p monomials qc op default =
+let print_qual = output_qual stdout
+  
+let rec output_conj_aux fp p monomials qc op default =
   match qc with
-    [] -> print_string default
+    [] -> output_string fp default
   | (q,b)::qc'->
      if b then
-       (print_string op; print_qual p monomials q; print_conj_aux p monomials qc' " /\\" "")
+       (output_string fp op; output_qual fp p monomials q; output_conj_aux fp p monomials qc' " &&" "")
      else
-       print_conj_aux p monomials qc' op default
+       output_conj_aux fp p monomials qc' op default
 
-let print_bmonos p conj op =
+
+let output_bmonos fp p conj op =
   let bms = bmonomials_of p in
   let bc = List.combine bms conj in
   let pre = ref "" in
   List.iter
     (fun (bm, b) ->
       if b then
-        (print_string (!pre^(string_of_bmono bm));
+        (output_string fp (!pre^(string_of_bmono bm));
          pre := op)
       else ())
     bc
     
-let print_conj p monomials quals conj =
+let output_conj fp p monomials quals conj =
   let (conj2, conj1) = Util.list_split conj (List.length conj - List.length quals) in
   let qc = List.combine quals conj1 in
   if List.exists (fun b->b) conj2 then
-    (print_bmonos p conj2 "/\\";
-     print_conj_aux p monomials qc "/\\" "")
+    (output_bmonos fp p conj2 "&&";
+     output_conj_aux fp p monomials qc "&&" "")
   else 
-    print_conj_aux p monomials qc "" "true"
+    output_conj_aux fp p monomials qc "" "true"
   
-let rec print_dnf p monomials quals dnf flag =
+let rec output_dnf fp p monomials quals dnf flag =
   match dnf with
-    [] -> print_string "false"
+    [] -> output_string fp "false"
   | [conj] ->
-     if flag then print_string "(";
-     print_conj p monomials quals conj;
-     if flag then print_string ")";
+     if flag then output_string fp "(";
+     output_conj fp p monomials quals conj;
+     if flag then output_string fp ")";
   | conj::dnf' ->
-     (print_string "(";
-      print_conj p monomials quals conj;
-      print_string ")\\/";
-      print_dnf p monomials quals dnf' true)
+     (output_string fp "(";
+      output_conj fp p monomials quals conj;
+      output_string fp ")||";
+      output_dnf fp p monomials quals dnf' true)
 
+let print_dnf = output_dnf stdout
 
 let output_log_qual fp1 fp0 p (coeffs,const,flag,priority) =
   let fp = if priority=1 then fp1 else fp0 in
@@ -490,14 +515,29 @@ let qual2smt p monomials (coeffs,const, flag,_) =
   let k = const in
   if k = 0 then ()
   else args := (smtstring_of_int k)::!args;
-  let s = if List.length !args<2 then List.hd !args
+  let s = if !args=[] then smtstring_of_int k
+          else if List.length !args<2 then List.hd !args
           else ("(+ "^(String.concat " " !args)^")")
   in
   if flag then "(> "^s^" 0)"
   else "(< "^s^" 0)"
       
 
-let output_dnf fp p monomials quals dnf =
+let conj2smt p ms (l1,l2) =
+  match (l1,l2) with
+    ([], []) -> assert false
+  | ([(q,_)], []) -> qual2smt p ms q
+  | ([], [(bm,_)]) -> bm2smt bm
+  | _ ->
+     let s1 =
+       List.fold_left
+         (fun s (q,_) -> s^" "^(qual2smt p ms q)) "" l1 in
+     let s2 =
+       List.fold_left
+         (fun s (bm,_) -> s^" "^(bm2smt bm)) "" l2 in
+     "(and "^s1^" "^s2^")"
+     
+let output_dnfsmt fp p monomials quals dnf =
   let bms = bmonomials_of p in
   let dnf' =
     List.map (fun conj ->
@@ -520,10 +560,33 @@ let output_dnf fp p monomials quals dnf =
       dnf'
   in
   List.iter (fun q -> output_string fp ((qual2smt p monomials q)^"\n")) ql;
-  List.iter (fun bm -> output_string fp ((bm2smt bm)^"\n")) bl
+  List.iter (fun bm -> output_string fp ((bm2smt bm)^"\n")) bl;
+  List.iter (fun (l1,l2) ->
+      let n = List.length l1 + List.length l2 in
+      if n>1 && n <= !conjqual
+      then
+        output_string fp ((conj2smt p monomials (l1,l2))^"\n"))
+    dnf'
+
+let smtvardec p =  
+   let kinds = kinds_of p in
+   let vl = List.init (List.length kinds) (fun i-> "x"^(string_of_int i)) in
+   let vars = String.concat " " vl in
+   let vk = List.combine vl kinds in
+   (vars,
+    List.fold_left
+     (fun s (v,k) -> s^"("^v^" "^(smtstring_of_kind k)^") ")
+     "" vk
+   )
+let mlvardec p =  
+   let kinds = kinds_of p in
+   let vl = List.init (List.length kinds) (fun i-> "x"^(string_of_int i)) in
+    String.concat " " vl
   
 let print_predicates() =
-  let fp = if !outsmt then open_out !smtfile else stdout in
+  let fp = if !outsmt then open_out !smtfile
+           else if !outml then open_out !mlfile
+           else stdout in
   Hashtbl.iter
     (fun p dnf ->
       let quals = Hashtbl.find qualtab p in
@@ -533,10 +596,16 @@ let print_predicates() =
       print_string "\n";
       if !outsmt then
         (output_string fp ("; "^p^"\n");
-         output_dnf fp p monomials quals dnf)
+         let (vars,vardec) = smtvardec p in
+         output_string fp (vars^"\n"^vardec^"\n");
+         output_dnfsmt fp p monomials quals dnf)
+      else if !outml then
+        (output_string fp ("let "^p^" "^(mlvardec p)^" = ");
+         output_dnf fp p monomials quals dnf false;
+         output_string fp "\n")
     )
     predtab;
-  if !outsmt then close_out fp
+  if !outsmt || !outml then close_out fp 
 
 let output_qual2smt() =  
   let fp = open_out !smtfile in

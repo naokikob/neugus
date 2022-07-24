@@ -13,7 +13,7 @@ run
 dune build learnMp.exe
 ```
 You need to install ocaml-torch (by running 'opam install torch') in advance.
-
+Add the directory of learnMp.sh to the PATH environment variable.
 
 # How to run the formula synthesizer
 run
@@ -64,5 +64,24 @@ run
 
 ### Example:
 ./cycle.sh data/chc/plusminus.smt2
+
+
+# How to install an oracle synthesizer
+run
+```
+dune build oracle.exe 
+```
+
+# How to run oracle synthesizer
+run
+```
+cd <directory where the input oracle file is located>
+mkdir tmp (* the tmp directory has not been created *)
+oracle.sh <oraclefile>
+```
+
+### Example:
+cd data/oracleinputs
+oracle.sh abs
 
 

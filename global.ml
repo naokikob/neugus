@@ -31,8 +31,11 @@ let hidden_nodes = ref 32
 let hidden_nodes2 = ref 4
 let layers = ref 2
 let learning_rate = ref 1e-3
-let regularization_factor = ref 0.
+let regularization = ref false
+let regularization_factor = ref 1.0001
 let regularization_factor2 = ref 0.
+let regularization_const = ref 0.00001
+let regularization_const2 = ref 0.002
 let epochs = ref 30000
 let global_vs = ref (Var_store.create ~name:"tmp" ())
 let device = ref Device.Cpu
@@ -40,15 +43,20 @@ let loss_threshold = ref 1e-4
 let cut_training = ref true
 let retry = ref 3
 let noimp = ref false
+let cutimp = ref 20 (* cut too large implication constraints *)
+let maxcoeff = ref 4
 (* for logging *)
 (* filename to save qualifiers *)          
 let log_qual: string option ref = ref None
+let conjqual = ref 1
 (* filename to save/load NN *)
 let save: string option ref = ref None          
 let load: string option ref = ref None
 (* whether the predicate is output to a separate smt file *)
 let outsmt = ref false
 let smtfile = ref ""
+let outml = ref false
+let mlfile = ref ""
 (* for qualifier synthesis *)
 (* how much of the weights should be taken into account *)                                
 let ratio_extraction = ref 1.0
@@ -103,7 +111,8 @@ let bmonomials_of p =
   let (_,_,bmonomials) = Hashtbl.find signatures p in bmonomials
 let lookup_kinds (s: signature) p =
   let (kinds,_,_) = Hashtbl.find s p in kinds
-                                    
+let kinds_of p = lookup_kinds signatures p
+               
 let earity_of p =
   if !poly then
     2 * List.length (monomials_of p)
@@ -210,7 +219,13 @@ let bm2smt bm =
          "(= (mod x"^(string_of_int vid)^" "^(string_of_int n)^") 0)"
      else
        "(= (mod x"^(string_of_int vid)^" "^(string_of_int n)^") "^(string_of_int k)^")"
-                 
+
+let smtstring_of_kind k =
+  match k with
+    INT -> "Int"
+  | BOOL -> "Bool"
+  | FLOAT -> "Float"
+    
 let smtstring_of_monomial p monomials i =
   if !poly then
     let exponents = (Hashtbl.find exptab p).(i) in
