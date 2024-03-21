@@ -55,7 +55,8 @@ run
 dune build learnMp.exe cycle.exe mergedata.exe genHoiceInputWithHint.exe hoicelog2dat.exe
 ```
 You need to install ocaml-torch (by running 'opam install torch') and
-a forked version of Hoice (https://github.com/naokikob/hoice) in advance.
+a forked version of HoIce (https://github.com/naokikob/hoice) in advance.
+Please save the forked version of HoIce as "nkhoice".
 
 
 # How to run the NN-based CHC solver
