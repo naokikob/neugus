@@ -45,8 +45,9 @@ Run
 to see other options.
 
 ### Example:
+```
 ./learn.sh -nodes 16 -rate 0.01 -epochs 10000 data/2d/test1.dat
-
+```
 
 # How to install a NN-based CHC solver
 run
@@ -64,8 +65,9 @@ run
 ```
 
 ### Example:
+```
 ./cycle.sh data/chc/plusminus.smt2
-
+```
 
 # How to install an oracle synthesizer
 run
@@ -82,7 +84,8 @@ oracle.sh <oraclefile>
 ```
 
 ### Example:
+```
 cd data/oracleinputs
 ../../oracle.sh abs
-
+```
 
