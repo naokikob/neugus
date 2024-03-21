@@ -26,7 +26,7 @@ let l_nor vs ?w_init ~input_dim output_dim =
     let n = List.hd (Tensor.size xs) in
     let xs' = Tensor.reshape xs ~shape:[n; 1; input_dim] in
     let u = Tensor.(sigmoid (f 8.0 * (f 2.0 - xs' * w))) in
-    Tensor.(prod1 u ~dim:2 ~keepdim:false ~dtype:(T Float))
+    Tensor.(prod_dim_int u ~dim:2 ~keepdim:false ~dtype:(T Float))
   in
     apply 
 
@@ -43,7 +43,7 @@ let l_or vs ?w_init ~input_dim output_dim =
     let n = List.hd (Tensor.size xs) in
     let xs' = Tensor.reshape xs ~shape:[n; 1; input_dim] in
     let u = Tensor.(sigmoid (f (8.0) * (f 2.0 - xs' * w))) in
-    Tensor.(f 1.0 - prod1 u ~dim:2 ~keepdim:false ~dtype:(T Float))
+    Tensor.(f 1.0 - prod_dim_int u ~dim:2 ~keepdim:false ~dtype:(T Float))
   in
     apply 
       

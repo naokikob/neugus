@@ -42,6 +42,7 @@ let device = ref Device.Cpu
 let loss_threshold = ref 1e-4
 let cut_training = ref true
 let retry = ref 3
+let repeat = ref false
 let noimp = ref false
 let cutimp = ref 20 (* cut too large implication constraints *)
 let maxcoeff = ref 4
@@ -135,6 +136,11 @@ let last_loss = ref 1.
 let posc: atom list ref = ref []
 let negc: atom list ref = ref []
 let impc: (atom list * atom list) list ref = ref []
+let validation = ref false
+let posc_for_test: atom list ref = ref []
+let negc_for_test: atom list ref = ref []
+let testdatafile = ref ""
+let training_ratio = ref 1.0
 let constraints = (posc, negc, impc)
 let num_of_constraints = ref 0
 (* the id of atom; 
@@ -165,7 +171,10 @@ let string_of_datum d =
 
 let string_of_dl dl =
   List.fold_left (fun s d -> s^" "^(string_of_datum d)) "" dl
-  
+
+let string_of_dl2 dl =
+  List.fold_left (fun s d -> s^" ("^(string_of_datum d)^")") "" dl
+
 let string_of_atom (p, a) =
   let dl = Hashtbl.find id2rawdatatab (p,a) in
    p^(string_of_dl dl)

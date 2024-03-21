@@ -1,5 +1,4 @@
-(* let path = "/home/koba/program/torch/torch/chc/" *)
-let path = ""
+let path = ref ""
 let oracle_arity = ref 1
 let options = ref ""
 let main_arity = ref 1
@@ -113,6 +112,7 @@ exception Fail
 let main () =
   let index = read_options 1 in
   let filename = Sys.argv.(index) in
+  let  _ = path := (Sys.argv.(index+1))^"/" in
   let tmpfilename = "tmp/"^filename in
   let mlfile = filename^".ml" in
   let specfile = filename^".spec" in
@@ -159,7 +159,7 @@ let main () =
         let dfile = tmpfilename^"_"^(string_of_int !trial)^".dat" in
         let _ = prepare_datafile dfile prev_dfile dfile1 dfile2 in
         let oraclefile = tmpfilename^"_"^(string_of_int !trial)^"_oracle.ml" in
-        let res = Sys.command (path^"learn.sh -ml "^oraclefile^" "^(!options)^" "^dfile) in
+        let res = Sys.command (!path^"learn.sh -ml "^oraclefile^" "^(!options)^" "^dfile) in
         (if res=0 then
            try let fp = open_in oraclefile in
                let s = input_line fp in

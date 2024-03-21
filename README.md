@@ -32,6 +32,7 @@ learn.sh <options> <datafile>
   - 0: sigmoid
   - 1: tanh
 
+* -rate: learning rate
 * -mod2 : consider mod 2 constraints on integer arguments
 * -poly : infer polynomial constraints (warning: this is an experimental mode, which does not work properly)
 * -3l : use three layers (default: false)
@@ -44,13 +45,13 @@ Run
 to see other options.
 
 ### Example:
-./learn.sh -nodes 16 -epochs 10000 -loss 0 data/plus.dat
+./learn.sh -nodes 16 -rate 0.01 -epochs 10000 data/2d/test1.dat
 
 
 # How to install a NN-based CHC solver
 run
 ```
-dune build learnMp.exe cycle.exe mergedata.exe genHoiceInputWithHint.exe 
+dune build learnMp.exe cycle.exe mergedata.exe genHoiceInputWithHint.exe hoicelog2dat.exe
 ```
 You need to install ocaml-torch (by running 'opam install torch') and
 a forked version of Hoice (https://github.com/naokikob/hoice) in advance.
@@ -76,12 +77,12 @@ dune build oracle.exe
 run
 ```
 cd <directory where the input oracle file is located>
-mkdir tmp (* the tmp directory has not been created *)
+mkdir tmp (* if the tmp directory has not been created *)
 oracle.sh <oraclefile>
 ```
 
 ### Example:
 cd data/oracleinputs
-oracle.sh abs
+../../oracle.sh abs
 
 
